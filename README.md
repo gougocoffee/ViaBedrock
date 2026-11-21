@@ -1,3 +1,11 @@
+> **Fork note** — This is `gougocoffee/ViaBedrock`, a fork tuned for third-party Bedrock servers (tested against The Hive, target `Bedrock 1.26.60`, Java clients up to 26.3). Extra changes on top of upstream:
+>
+> - Chunk tracker tolerates servers that send a zero/absent world height
+> - Windowed (64-chunk) resource pack downloads, so big server packs don't stall
+> - **Name-based custom block mappings** (`assets/viabedrock/data/custom/blockname_mappings.json`), so server-defined blocks (`hive:*`, `founder_ad:*`) resolve to sensible Java blocks instead of `info_update`
+>
+> Prebuilt jars are published as GitHub Actions artifacts of this repository.
+
 # ViaBedrock
 
 ViaVersion addon to add support for Minecraft: Bedrock Edition servers.
@@ -80,3 +88,12 @@ ViaBedrock would not have been possible without the following projects:
 - [wiki.bedrock.dev](https://wiki.bedrock.dev): Documentation of various technical aspects of Bedrock Edition
 
 Additionally ViaBedrock uses assets and data dumps from other projects: See the `Data Asset Sources.md` file for more information.
+
+## License
+
+ViaBedrock is licensed under the **GNU General Public License v3.0** (GPL-3.0). See [LICENSE](LICENSE) for the full text.
+
+- Upstream: Copyright (C) 2023-2026 RK_01 / RaphiMC and contributors — <https://github.com/ViaVersionAddons/ViaBedrock>
+- This fork: Copyright (C) 2026 gougocoffee and contributors — <https://github.com/gougocoffee/ViaBedrock>
+
+Because GPL-3.0 is copyleft, redistributing this fork or a modified build requires keeping the same license, providing the corresponding source, and preserving the copyright notices above.
