@@ -99,8 +99,15 @@ public class ChunkTracker extends StoredObject {
         final CompoundTag dimensionRegistry = registries.getCompoundTag(RegistryKeys.DIMENSION_TYPE);
         final CompoundTag biomeRegistry = registries.getCompoundTag(RegistryKeys.WORLDGEN_BIOME);
         final CompoundTag dimensionTag = dimensionRegistry.getCompoundTag(dimensionKey);
-        this.minY = dimensionTag.getNumberTag("min_y").asInt();
-        this.worldHeight = dimensionTag.getNumberTag("height").asInt();
+        this.minY = dimensionTag != null && dimensionTag.getNumberTag("min_y") != null ? dimensionTag.getNumberTag("min_y").asInt() : -64;
+        this.worldHeight = dimensionTag != null && dimensionTag.getNumberTag("height") != null ? dimensionTag.getNumberTag("height").asInt() : 0;
+        if (this.worldHeight <= 0) {
+            // Servers with non standard dimension registries (e.g. Hive) may omit or zero the height,
+            // which makes ChunkType26_1 throw IllegalArgumentException(ySectionCount <= 0).
+            ViaBedrock.getPlatform().getLogger().log(Level.WARNING,
+                    "Invalid world height for dimension " + dimensionKey + " (" + this.worldHeight + "), falling back to 384");
+            this.worldHeight = 384;
+        }
         this.chunkType = new ChunkType26_1(this.worldHeight >> 4, MathUtil.ceilLog2(BedrockProtocol.MAPPINGS.getJavaBlockStates().size()), MathUtil.ceilLog2(biomeRegistry.size()));
 
         final ChunkTracker oldChunkTracker = user.get(ChunkTracker.class);
