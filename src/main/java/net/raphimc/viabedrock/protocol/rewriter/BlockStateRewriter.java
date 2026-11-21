@@ -57,6 +57,10 @@ public class BlockStateRewriter implements StorableObject {
         final Map<BlockState, BlockState> bedrockToJavaBlockStates = BedrockProtocol.MAPPINGS.getBedrockToJavaBlockStates();
         final Map<String, String> blockTags = BedrockProtocol.MAPPINGS.getBedrockCustomBlockTags();
         final Map<String, BlockState> bedrockBlockNameToJavaStates = BedrockProtocol.MAPPINGS.getBedrockBlockNameToJavaStates();
+        final Map<String, Integer> defaultJavaStateByBlock = new java.util.HashMap<>(javaBlockStates.size());
+        for (Map.Entry<BlockState, Integer> entry : javaBlockStates.entrySet()) {
+            defaultJavaStateByBlock.putIfAbsent(entry.getKey().namespacedIdentifier(), entry.getValue());
+        }
         final Set<String> bedrockBlockIdentifiers = bedrockBlockStates.stream().map(BedrockBlockState::namespacedIdentifier).collect(Collectors.toSet());
         final List<BedrockBlockState> customBlockStates = new ArrayList<>();
 
@@ -174,13 +178,16 @@ public class BlockStateRewriter implements StorableObject {
             if (mappedJavaState == null && bedrockBlockNameToJavaStates != null) {
                 mappedJavaState = bedrockBlockNameToJavaStates.get(bedrockBlockState.namespacedIdentifier());
             }
-            if (mappedJavaState != null) {
-                final int javaId = javaBlockStates.get(mappedJavaState);
-                this.blockStateIdMappings.put(bedrockId, javaId);
+            Integer javaId = mappedJavaState == null ? null : javaBlockStates.get(mappedJavaState);
+            if (javaId == null && mappedJavaState != null) {
+                javaId = defaultJavaStateByBlock.get(mappedJavaState.namespacedIdentifier());
+            }
+            if (javaId != null) {
+                this.blockStateIdMappings.put(bedrockId, javaId.intValue());
             } else {
                 ViaBedrock.getPlatform().getLogger().log(Level.WARNING, "Missing bedrock -> java block state mapping: " + bedrockBlockState.toBlockStateString());
-                final int javaId = javaBlockStates.get(bedrockToJavaBlockStates.get(BedrockBlockState.INFO_UPDATE));
-                this.blockStateIdMappings.put(bedrockId, javaId);
+                final Integer infoUpdateJavaId = javaBlockStates.get(bedrockToJavaBlockStates.get(BedrockBlockState.INFO_UPDATE));
+                this.blockStateIdMappings.put(bedrockId, infoUpdateJavaId == null ? 0 : infoUpdateJavaId.intValue());
             }
         }
 
