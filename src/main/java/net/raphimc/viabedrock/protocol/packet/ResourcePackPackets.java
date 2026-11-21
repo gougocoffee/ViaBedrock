@@ -49,8 +49,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 public final class ResourcePackPackets {
-    private static final int PACK_CHUNK_WINDOW = 64;
 
+    private static final int PACK_CHUNK_WINDOW = 64;
 
     public static void register(final BedrockProtocol protocol) {
         protocol.registerClientboundTransition(ClientboundBedrockPackets.RESOURCE_PACKS_INFO,
