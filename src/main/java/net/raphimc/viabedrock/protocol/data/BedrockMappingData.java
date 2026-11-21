@@ -264,7 +264,7 @@ public class BedrockMappingData extends MappingDataBase {
                 for (Map.Entry<String, JsonElement> entry : bedrockBlockNameMappingsJson.entrySet()) {
                     this.bedrockBlockNameToJavaStates.put(entry.getKey(), BlockState.fromString(entry.getValue().getAsString()));
                 }
-            } catch (Throwable ignored) {
+            } catch (final Throwable ignored) {
                 // optional custom block name mapping file
             }
 
