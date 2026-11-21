@@ -49,6 +49,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 public final class ResourcePackPackets {
+    private static final int PACK_CHUNK_WINDOW = 64;
+
 
     public static void register(final BedrockProtocol protocol) {
         protocol.registerClientboundTransition(ClientboundBedrockPackets.RESOURCE_PACKS_INFO,
@@ -171,7 +173,12 @@ public final class ResourcePackPackets {
             final PackType type = PackType.getByValue(wrapper.read(Types.UNSIGNED_BYTE), PackType.Invalid); // pack type
 
             final ResourcePackDownloadTracker.Download download = wrapper.user().get(ResourcePackDownloadTracker.class).add(key, size, chunkSize, hash, premium, type);
-            for (long chunk = 0; chunk < download.receivedChunks().length; chunk++) {
+            final int totalChunks = download.receivedChunks().length;
+            final int window = Math.min(PACK_CHUNK_WINDOW, totalChunks);
+            if (totalChunks > window) {
+                ViaBedrock.getPlatform().getLogger().log(Level.INFO, "Windowed chunk request for " + key + " (" + window + "/" + totalChunks + ")");
+            }
+            for (long chunk = 0; chunk < window; chunk++) {
                 final PacketWrapper resourcePackChunkRequest = wrapper.create(ServerboundBedrockPackets.RESOURCE_PACK_CHUNK_REQUEST);
                 resourcePackChunkRequest.write(BedrockTypes.STRING, key); // resource name
                 resourcePackChunkRequest.write(BedrockTypes.UNSIGNED_INT_LE, chunk); // chunk
@@ -190,6 +197,17 @@ public final class ResourcePackPackets {
             if (download != null) {
                 ViaBedrock.getPlatform().getLogger().log(Level.INFO, "Downloading resource pack chunk " + chunk + "/" + download.chunkSize() + " for " + key);
                 final ResourcePack resourcePack = download.processDataChunk(chunk, data);
+                if (resourcePack == null) {
+                    // Keep a sliding window of requests in flight; firing all requests at once makes
+                    // the Bedrock server throttle the transfer down to a crawl.
+                    final long nextChunk = chunk + PACK_CHUNK_WINDOW;
+                    if (nextChunk < download.receivedChunks().length) {
+                        final PacketWrapper nextRequest = wrapper.create(ServerboundBedrockPackets.RESOURCE_PACK_CHUNK_REQUEST);
+                        nextRequest.write(BedrockTypes.STRING, key);
+                        nextRequest.write(BedrockTypes.UNSIGNED_INT_LE, nextChunk);
+                        nextRequest.sendToServer(BedrockProtocol.class);
+                    }
+                }
                 if (resourcePack != null) {
                     downloadTracker.remove(key);
                     if (download.type() == PackType.Resources) {
