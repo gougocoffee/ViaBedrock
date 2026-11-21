@@ -56,6 +56,7 @@ public class BlockStateRewriter implements StorableObject {
         final Map<BlockState, Integer> javaBlockStates = BedrockProtocol.MAPPINGS.getJavaBlockStates();
         final Map<BlockState, BlockState> bedrockToJavaBlockStates = BedrockProtocol.MAPPINGS.getBedrockToJavaBlockStates();
         final Map<String, String> blockTags = BedrockProtocol.MAPPINGS.getBedrockCustomBlockTags();
+        final Map<String, BlockState> bedrockBlockNameToJavaStates = BedrockProtocol.MAPPINGS.getBedrockBlockNameToJavaStates();
         final Set<String> bedrockBlockIdentifiers = bedrockBlockStates.stream().map(BedrockBlockState::namespacedIdentifier).collect(Collectors.toSet());
         final List<BedrockBlockState> customBlockStates = new ArrayList<>();
 
@@ -169,8 +170,12 @@ public class BlockStateRewriter implements StorableObject {
                 this.blockStateTags.put(bedrockId, blockTags.get(bedrockBlockState.namespacedIdentifier()));
             }
 
-            if (bedrockToJavaBlockStates.containsKey(bedrockBlockState)) {
-                final int javaId = javaBlockStates.get(bedrockToJavaBlockStates.get(bedrockBlockState));
+            BlockState mappedJavaState = bedrockToJavaBlockStates.get(bedrockBlockState);
+            if (mappedJavaState == null && bedrockBlockNameToJavaStates != null) {
+                mappedJavaState = bedrockBlockNameToJavaStates.get(bedrockBlockState.namespacedIdentifier());
+            }
+            if (mappedJavaState != null) {
+                final int javaId = javaBlockStates.get(mappedJavaState);
                 this.blockStateIdMappings.put(bedrockId, javaId);
             } else {
                 ViaBedrock.getPlatform().getLogger().log(Level.WARNING, "Missing bedrock -> java block state mapping: " + bedrockBlockState.toBlockStateString());

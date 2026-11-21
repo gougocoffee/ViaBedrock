@@ -94,6 +94,7 @@ public class BedrockMappingData extends MappingDataBase {
     private BiMap<BlockState, Integer> javaBlockStates;
     private Set<BedrockBlockState> bedrockBlockStates;
     private Map<BlockState, BlockState> bedrockToJavaBlockStates;
+    private Map<String, BlockState> bedrockBlockNameToJavaStates;
     private Map<String, String> bedrockCustomBlockTags;
     private Map<String, Map<String, Map<String, Set<String>>>> bedrockBlockTraits;
     private BiMap<String, Integer> bedrockLegacyBlocks;
@@ -255,6 +256,16 @@ public class BedrockMappingData extends MappingDataBase {
                 if (this.bedrockToJavaBlockStates.put(bedrockBlockState, javaBlockState) != null) {
                     throw new RuntimeException("Duplicate bedrock -> java block state mapping for " + bedrockBlockState.toBlockStateString());
                 }
+            }
+
+            this.bedrockBlockNameToJavaStates = new HashMap<>();
+            try {
+                final JsonObject bedrockBlockNameMappingsJson = this.readJson("custom/blockname_mappings.json");
+                for (Map.Entry<String, JsonElement> entry : bedrockBlockNameMappingsJson.entrySet()) {
+                    this.bedrockBlockNameToJavaStates.put(entry.getKey(), BlockState.fromString(entry.getValue().getAsString()));
+                }
+            } catch (Throwable ignored) {
+                // optional custom block name mapping file
             }
 
             final JsonObject bedrockCustomBlockTagsJson = this.readJson("custom/block_tags.json");
@@ -1075,6 +1086,10 @@ public class BedrockMappingData extends MappingDataBase {
 
     public Map<BlockState, BlockState> getBedrockToJavaBlockStates() {
         return this.bedrockToJavaBlockStates;
+    }
+
+    public Map<String, BlockState> getBedrockBlockNameToJavaStates() {
+        return this.bedrockBlockNameToJavaStates;
     }
 
     public Map<String, String> getBedrockCustomBlockTags() {
